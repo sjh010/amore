@@ -7,12 +7,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import com.apgroup.pms.data.entity.Order;
 import com.apgroup.pms.dto.OrderSheet;
 import com.apgroup.pms.dto.response.OrderResponse;
+import com.apgroup.pms.thread.WorkTimer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 주문 및 발송 관리 유틸
  */
+@Slf4j
 @RequiredArgsConstructor
 public class OrderManagementUtils {
 	
@@ -23,8 +26,8 @@ public class OrderManagementUtils {
 	private static LinkedBlockingQueue<Order> forwardingQueue = new LinkedBlockingQueue<Order>();
 	
 	public static OrderResponse addOrderSheet(Order order) {
+		log.info("[{}][주문번호 : {}] 주문 접수", WorkTimer.getCurrentTime(), order.getOrderNumber());
 		orderQueue.add(createOrderSheet(order));
-		
 		return getOrderResponse(order);	
 	}
 	
@@ -86,12 +89,21 @@ public class OrderManagementUtils {
 	
 	private static OrderResponse getOrderResponse(Order order) {
 		OrderResponse orderResponse = OrderResponse.builder()
-				.order_number(order.getOrderNumber())
-				.order(order.getOrderCode())
-				.send_date(order.getSendDate())
+				.orderNumber(order.getOrderNumber())
+				.orderCode(order.getOrderCode())
+				.sendDate(order.getSendDate())
 				.build();
 		
 		return orderResponse;
+	}
+
+	public static void cancelOrder(String orderNumber) {
+		orderQueue.stream().forEach(orderSheet -> {
+			if (orderSheet.getOrderNumber().equalsIgnoreCase(orderNumber)) {
+				orderQueue.remove(orderSheet);
+			}
+		});
+		
 	}
 
 }

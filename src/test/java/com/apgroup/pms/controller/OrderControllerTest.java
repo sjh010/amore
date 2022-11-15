@@ -11,6 +11,7 @@ import com.apgroup.pms.dto.response.OrderResponse;
 import com.apgroup.pms.error.ErrorCode;
 import com.apgroup.pms.error.exception.EntityNotExistException;
 import com.apgroup.pms.service.OrderService;
+import com.apgroup.pms.type.OrderStatusCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +45,9 @@ class OrderControllerTest {
     @Test
     void get_orders_success() throws Exception {
         // Given
-        OrderResponse order1 = new OrderResponse("1", "A5B5", "20221115", null);
-        OrderResponse order2 = new OrderResponse("2", "A5C5", "20221116", null);
-        OrderResponse order3 = new OrderResponse("3", "A5D5", "20221117", null);
+        OrderResponse order1 = new OrderResponse("1", "A5B5", "20221115", null, null, null);
+        OrderResponse order2 = new OrderResponse("2", "A5C5", "20221116", null, null, null);
+        OrderResponse order3 = new OrderResponse("3", "A5D5", "20221117", null, null, null);
         List<OrderResponse> response = new ArrayList<>();
         response.add(order1);
         response.add(order2);
@@ -79,7 +80,7 @@ class OrderControllerTest {
     void get_order_success() throws Exception {
         // Given
         String orderNumber = "1";
-        OrderResponse order = new OrderResponse(orderNumber, "A5B5", "20221115", null);
+        OrderResponse order = new OrderResponse(orderNumber, "A5B5", "20221115", null, null, null);
         given(orderService.getOrder(orderNumber)).willReturn(order);
 
         // When & Then
@@ -116,7 +117,7 @@ class OrderControllerTest {
         String order = "A5C5";
         String sendDate = "20221120";
         OrderRequest request = new OrderRequest(orderNumber, order, "20221115");
-        OrderResponse response = new OrderResponse(orderNumber, order, sendDate, null);
+        OrderResponse response = new OrderResponse(orderNumber, order, sendDate, null, null, null);
 
         given(orderService.addOrder(any(OrderRequest.class))).willReturn(response);
 
@@ -165,7 +166,7 @@ class OrderControllerTest {
     void cancel_order_success() throws Exception {
         // Given
         String orderNumber = "1";
-        OrderResponse order = new OrderResponse(orderNumber, "A5B5", "20221115", null);
+        OrderResponse order = new OrderResponse(orderNumber, "A5B5", "20221115", null, null, null);
         given(orderService.cancelOrder(orderNumber)).willReturn(order);
 
         // When & Then
@@ -200,7 +201,7 @@ class OrderControllerTest {
         // Given
         String orderNumber = "3";
         String order = "A5B5";
-        OrderResponse response = new OrderResponse(orderNumber, order, "20221115", ErrorCode.UNABLE_TO_CANCEL_ORDER.getMessage());
+        OrderResponse response = new OrderResponse(orderNumber, order, "20221115", "20221115", OrderStatusCode.PRODUCT_IN_PRODUCTION.getDescription(), ErrorCode.UNABLE_TO_CANCEL_ORDER.getMessage());
         given(orderService.cancelOrder(orderNumber)).willReturn(response);
 
         // When & Then

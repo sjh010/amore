@@ -1,6 +1,5 @@
 package com.apgroup.pms.service;
 
-import com.apgroup.pms.error.exception.EntityNotExistException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -14,9 +13,10 @@ import com.apgroup.pms.data.repository.OrderRepository;
 import com.apgroup.pms.dto.OrderSheet;
 import com.apgroup.pms.dto.request.OrderRequest;
 import com.apgroup.pms.dto.response.OrderResponse;
+import com.apgroup.pms.error.ErrorCode;
+import com.apgroup.pms.error.exception.EntityNotExistException;
 import com.apgroup.pms.thread.ProductionLine;
 import com.apgroup.pms.thread.WorkTimer;
-import com.apgroup.pms.error.ErrorCode;
 import com.apgroup.pms.type.OrderStatusCode;
 import com.apgroup.pms.utils.OrderManagementUtils;
 
@@ -39,19 +39,21 @@ public class OrderService {
 			throw new EntityNotExistException("not exists order : " + orderNumber);
 		});
 
-		return getOrderResponse(order);
+		return getOrderStatusResponse(order);
 	}
-	
+
 	public List<OrderResponse> getOrders() {
 		List<OrderResponse> list = new ArrayList<>();
 		
-		repository.findAll().forEach(order -> list.add(getOrderResponse(order)));
+		repository.findAll().forEach(order -> list.add(getOrderStatusResponse(order)));
 		
 		return list;
 	}
 	
 	/**
-	 * 주문 등록 - 설명추가필요
+	 * 주문 등록
+	 * - 주문 내역 및 생산 설비 상태를 통해 발송일을 계산
+	 * - 주문일과 발송예정일이 7일이상 차이날 경우 생산 지연으로 인한 주문취소처리
 	 */
 	public OrderResponse addOrder(OrderRequest orderRequest) {
 		if (repository.existsById(orderRequest.getOrderNumber())) {
@@ -88,9 +90,8 @@ public class OrderService {
 
 		order.setSendDate(sendDate);
 
-		if (delayDays >= 7) { // 주문일과 발송예정일이 7일이상 차이날 경우 생산 지연으로 인한 주문취소처리
+		if (delayDays >= 7) { // 주문 취소
 			order.setOrderStatus(OrderStatusCode.ORDER_CANCEL.getCode());
-
 			return getOrderResponse(order, ErrorCode.ORDER_CANCEL);
 		} else {
 			order.setOrderStatus(orderStatusCode.getCode());
@@ -103,7 +104,9 @@ public class OrderService {
 	}
 	
 	/**
-	 * 주문 취소 - 설명
+	 * 주문 취소
+	 * - 제품 생산이 시작되지 않았을 경우에만 주문 취소 가능
+	 * - 제품 생산이 시작된 이후 주문 취소 불가
 	 */
 	public OrderResponse cancelOrder(String orderNumber) {
 		Optional<Order> optionalOrder = repository.findById(orderNumber);
@@ -111,25 +114,14 @@ public class OrderService {
 			throw new EntityNotExistException("not exists order : " + orderNumber);
 		});
 
-		if (OrderStatusCode.isCancellable(OrderStatusCode.getByCode(order.getOrderStatus()).getOrder())) {
-			// 제품이 생산이 시작 되지 않았을 경우에만 주문 취소 가능
+		if (OrderStatusCode.isCancellable(OrderStatusCode.getByCode(order.getOrderStatus()).getOrder())) { // 주문 취소 가능
 			order.setOrderStatus(OrderStatusCode.ORDER_CANCEL.getCode());
 			repository.update(order);
+			OrderManagementUtils.cancelOrder(order.getOrderNumber());
 			return getOrderResponse(order);
-		} else { // 제품 생산이 시작된 이후 주문 취소 불가
+		} else { // 주문 취소 불가
 			return getOrderResponse(order, ErrorCode.UNABLE_TO_CANCEL_ORDER);
 		}
-	}
-	
-
-	private OrderResponse getOrderResponse(Order order) {
-		OrderResponse orderResponse = OrderResponse.builder()
-				.order_number(order.getOrderNumber())
-				.order(order.getOrderCode())
-				.send_date(order.getSendDate())
-				.build();
-		
-		return orderResponse;
 	}
 	
 	private OrderResponse getOrderResponse(Order order, ErrorCode errorMessage) {
@@ -140,6 +132,28 @@ public class OrderService {
 		}
 		
 		return orderResponse;
+	}
+	
+	private OrderResponse getOrderResponse(Order order) {
+		OrderResponse orderResponse = OrderResponse.builder()
+				.orderNumber(order.getOrderNumber())
+				.orderCode(order.getOrderCode())
+				.sendDate(order.getSendDate())
+				.build();
+		
+		return orderResponse;
+	}
+	
+	private OrderResponse getOrderStatusResponse(Order order) {
+		OrderResponse orderStatusResponse = OrderResponse.builder()
+				.orderNumber(order.getOrderNumber())
+				.orderCode(order.getOrderCode())
+				.orderDate(order.getOrderDate())
+				.sendDate(order.getSendDate())
+				.orderStatus(OrderStatusCode.getByCode(order.getOrderStatus()).getDescription())
+				.build();
+		
+		return orderStatusResponse;
 	}
 
 }

@@ -1,7 +1,7 @@
 package com.apgroup.pms.data.repository;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,7 +19,7 @@ import com.apgroup.pms.data.entity.RawMaterial;
 @Repository
 public class RawMaterialRepository {
 
-	private Map<String, RawMaterial> map = new HashMap<String, RawMaterial>();
+	private Map<String, RawMaterial> map = new LinkedHashMap<String, RawMaterial>();
 	
 	public List<RawMaterial> findAll() {
 		List<RawMaterial> list = new ArrayList<RawMaterial>();

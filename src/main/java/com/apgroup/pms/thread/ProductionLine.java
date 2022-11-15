@@ -49,13 +49,13 @@ public class ProductionLine implements Runnable {
 	 */
 	@PostConstruct
 	public void init() {
-		rawMaterialRepository.save(new RawMaterial("A", 10, 0));
-		rawMaterialRepository.save(new RawMaterial("B", 10, 0));
-		rawMaterialRepository.save(new RawMaterial("C", 10, 0));
-		rawMaterialRepository.save(new RawMaterial("D", 10, 0));	
+		rawMaterialRepository.save(new RawMaterial("A", 20, 0));
+		rawMaterialRepository.save(new RawMaterial("B", 20, 0));
+		rawMaterialRepository.save(new RawMaterial("C", 20, 0));
+		rawMaterialRepository.save(new RawMaterial("D", 20, 0));	
 	}
 
-	@Scheduled(fixedDelay = 10000, initialDelay = 0)
+	@Scheduled(fixedDelay = 20000, initialDelay = 1000)
 	public void logStatus() {
 		StringBuilder sb = new StringBuilder("\n");
 		
@@ -127,7 +127,7 @@ public class ProductionLine implements Runnable {
 				
 				if (!OrderManagementUtils.isOrderQueueEmpty() && MAX_PRODUCTION_PER_DAY - TODAY_PRODUCTION > 0) { // 하루 최대 생산량을 못채운 경우
 					OrderSheet orderSheet = OrderManagementUtils.getOrderSheet();
-					log.info("[주문번호 : {}] 주문 확인", orderSheet.getOrderNumber());
+					log.info("[{}][주문번호 : {}] 주문 확인", WorkTimer.getCurrentTime(), orderSheet.getOrderNumber());
 					
 					String orderNumber = orderSheet.getOrderNumber();					
 					
@@ -148,6 +148,10 @@ public class ProductionLine implements Runnable {
 							orderRepository.updateStatus(orderNumber, OrderStatusCode.READY_TO_SHIP.getCode());
 							
 							OrderManagementUtils.addForwadingQueue(order);
+							
+							if (rawMaterial.getRemainAmount() == 0 && rawMaterial.getStockAmount() > 0) {
+								supplementMaterial(rawMaterial);
+							}
 						} else {
 							log.info("[{}][주문번호 : {}] 생산 불가 - 원료 및 재고 부족", WorkTimer.getCurrentTime(),  orderSheet.getOrderNumber());
 							order.setOrderStatus(OrderStatusCode.ORDER_CANCEL.getCode());
@@ -169,6 +173,13 @@ public class ProductionLine implements Runnable {
 							log.info("[{}][주문번호 : {}] {} 제품 생산 완료. 금일 생산량 : {}", WorkTimer.getCurrentTime(),orderSheet.getOrderNumber(), orderSheet.getOrder(), TODAY_PRODUCTION);
 							orderRepository.updateStatus(orderNumber, OrderStatusCode.READY_TO_SHIP.getCode());
 							OrderManagementUtils.addForwadingQueue(order);
+							
+							if (rawMaterial1.getRemainAmount() == 0 && rawMaterial1.getStockAmount() > 0) {
+								supplementMaterial(rawMaterial1);
+							}
+							if (rawMaterial2.getRemainAmount() == 0 && rawMaterial2.getStockAmount() > 0) {
+								supplementMaterial(rawMaterial2);
+							}
 							
 						} else {
 							log.info("[{}][주문번호 : {}] 생산 불가 - 원료 및 재고 부족", WorkTimer.getCurrentTime(),  orderSheet.getOrderNumber());
@@ -228,32 +239,38 @@ public class ProductionLine implements Runnable {
 	public void production(RawMaterial rawMaterial, int requirement) {
 		int remains = rawMaterial.getRemainAmount();
 		
-		if (remains - requirement > 0) {	// 원료 잔량이 필요량보다 많음. 생산가능
+		if (remains - requirement >= 0) {	// 원료 잔량이 필요량보다 많음. 생산가능
 			rawMaterial.setRemainAmount(remains - requirement);
-		} else {
+			rawMaterialRepository.update(rawMaterial);
+		}  else {
 			requirement = requirement - remains;
 			
 			int stockAmount = rawMaterial.getStockAmount();
+			
+			rawMaterial.setRemainAmount(0);
+			
+			rawMaterialRepository.update(rawMaterial);
 			
 			if (stockAmount >= MAX_REMAIN_AMOUNT) { // 재고있음. 원료 최대로 보충
 				supplementMaterial(rawMaterial);
 				rawMaterial.setRemainAmount(MAX_REMAIN_AMOUNT);
 				rawMaterial.setStockAmount(stockAmount - requirement);
+				rawMaterialRepository.update(rawMaterial);
 			} else { // 재고 있음. 재고량만큼 보충
 				supplementMaterial(rawMaterial);
 				rawMaterial.setStockAmount(0);
 				rawMaterial.setRemainAmount(stockAmount - requirement);
-			}
+				rawMaterialRepository.update(rawMaterial);
+			} 
 		}
 		
-		rawMaterialRepository.update(rawMaterial);
 	}
 	
 	/**
 	 * 해당 원료 잔량 및 재고량을 통해서 제품 생산 가능한지 여부
 	 */
 	private boolean isAvailableProduction(int remains, int stockAmount, int requirement) {
-		if (remains - requirement > 0) {	// 원료 잔량이 필요량보다 많음. 생산가능
+		if (remains - requirement >= 0) {	// 원료 잔량이 필요량보다 많음. 생산가능
 			return true;
 		} else if (stockAmount == 0) { // 재고 없음. 생산 불가
 			return false;
@@ -265,6 +282,7 @@ public class ProductionLine implements Runnable {
 	}
 
 	public void supplementMaterial(RawMaterial rawMaterial) {
+		log.info("[{}][{} 원료] 보충 시작", WorkTimer.getCurrentTime(), rawMaterial.getId());
 		try {
 			if (WorkTimer.isAbleCharge()) {
 				Thread.sleep(40000);
@@ -276,6 +294,8 @@ public class ProductionLine implements Runnable {
 
 				Thread.sleep((40 - remainWorkMinute) * 1000);
 			}
+			
+			log.info("[{}][{} 원료] 보충 완료", WorkTimer.getCurrentTime(), rawMaterial.getId());
 		} catch (InterruptedException e) {
 			log.error("ProductLine is dead", e);
 		}

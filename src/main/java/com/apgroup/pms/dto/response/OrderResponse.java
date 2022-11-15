@@ -22,19 +22,27 @@ import lombok.Setter;
 @JsonInclude(Include.NON_NULL)
 public class OrderResponse {
 
-	@ApiModelProperty(example = "주문번호")
+	@ApiModelProperty(name = "주문번호", example = "20220801001")
 	@JsonProperty("order_number")
-	private String order_number;
+	private String orderNumber;
 	
-	@ApiModelProperty(example = "주문코드")
+	@ApiModelProperty(name = "주문코드", example = "A7B3")
 	@JsonProperty("order")
-	private String order;
+	private String orderCode;
+
+	@ApiModelProperty(name = "주문일자", example = "220801")
+	@JsonProperty("order_date")
+	private String orderDate;
 	
-	@ApiModelProperty(example = "발송예정일")
+	@ApiModelProperty(name = "발송예정일", example = "20220801")
 	@JsonProperty("send_date")
-	private String send_date;
+	private String sendDate;
 	
-	@ApiModelProperty(example = "에러메세지")
+	@ApiModelProperty(name = "주문상태", example = "주문접수")
+	@JsonProperty("order_status")
+	private String orderStatus; 
+	
+	@ApiModelProperty(name = "에러메세지", example = "효능단종")
 	@JsonProperty("error")
 	private String error;	
 

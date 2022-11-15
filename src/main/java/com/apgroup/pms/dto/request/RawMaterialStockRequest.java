@@ -1,7 +1,7 @@
 package com.apgroup.pms.dto.request;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,14 +18,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RawMaterialStockRequest {
 
-	@ApiModelProperty(example = "원료 아이디")
+	@ApiModelProperty(name = "원료 아이디", example = "A")
 	@JsonProperty("id")
 	@NotBlank(message = "원료아이디 없음")
 	private String id;
 	
-	@ApiModelProperty(example = "재고량")
+	@ApiModelProperty(name = "재고량", example = "200")
 	@JsonProperty("amount")
-	@Min(value = 1, message = "재고량 없음")
-	private int stock;
+	@NotNull
+	private Integer stock;
 
 }

@@ -17,15 +17,15 @@ import lombok.Setter;
 @JsonInclude(Include.NON_NULL)
 public class RawMaterialResponse {
 
-	@ApiModelProperty(example = "원료 아이디")
+	@ApiModelProperty(name = "원료 아이디", example = "A")
 	private String id;
 	
-	@ApiModelProperty(example = "잔여량")
+	@ApiModelProperty(name = "잔여량", example = "100")
 	private Integer remainsAmount;
 	
-	@ApiModelProperty(example = "재고량")
+	@ApiModelProperty(name = "재고량", example = "200")
 	private Integer stockAmount;
 	
-	@ApiModelProperty(example = "에러메세지")
+	@ApiModelProperty(name = "에러메세지", example = "해당 원료가 이미 존재합니다.")
 	private String error;
 }

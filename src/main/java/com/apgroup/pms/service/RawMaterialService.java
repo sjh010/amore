@@ -40,6 +40,13 @@ public class RawMaterialService {
 		if (repository.existsById(request.getId())) {
 			Optional<RawMaterial> optionalRawMaterial = repository.findById(request.getId());
 			return getRawMaterialResponse(optionalRawMaterial.get(), ErrorCode.RAW_MATERIAL_IS_EXIST);
+		} else if (repository.findAll().size() == 10) { // 원료가 10개인 경우, 더이상 추가 불가
+			RawMaterialResponse rawMaterialResonse = RawMaterialResponse.builder()
+					.id(request.getId())
+					.error(ErrorCode.RAW_MATERIAL_NOT_ADDED.getMessage())
+					.build();
+			
+			return rawMaterialResonse;
 		}
 		
 		RawMaterial newRawMaterial = RawMaterial.builder()
@@ -60,11 +67,7 @@ public class RawMaterialService {
 					.error(ErrorCode.RAW_MATERIAL_NOT_EXIST.getMessage()).build();
 		}
 	}
-	
-	/**
-	 * 재고 목록 조회
-	 * @return
-	 */
+
 	public List<RawMaterialStockResponse> getStocks() {
 		List<RawMaterialStockResponse> responses = new ArrayList<RawMaterialStockResponse>();
 		
@@ -75,11 +78,6 @@ public class RawMaterialService {
 		return responses;
 	}
 	
-	/**
-	 * 재고량 조회
-	 * @param id
-	 * @return
-	 */
 	public RawMaterialStockResponse getStock(String id) {
 		RawMaterial stock = repository.findById(id).get();
 		
@@ -90,12 +88,6 @@ public class RawMaterialService {
 		}
 	}
 	
-	/**
-	 * 재고량 입력
-	 * @param id
-	 * @param stockAmount
-	 * @return
-	 */
 	public RawMaterialStockResponse updateStockAmount(RawMaterialStockRequest request) {
 		
 		if (repository.existsById(request.getId())) {
@@ -109,9 +101,7 @@ public class RawMaterialService {
 			return RawMaterialStockResponse.builder().id(request.getId())
 					.error(ErrorCode.RAW_MATERIAL_NOT_EXIST.getMessage())
 					.build();
-		}
-		
-			
+		}	
 	}
 	
 	private RawMaterialStockResponse getStockResponse(RawMaterial rawMaterial) {
@@ -142,6 +132,5 @@ public class RawMaterialService {
 		
 		return response;
 	}
-
 
 }

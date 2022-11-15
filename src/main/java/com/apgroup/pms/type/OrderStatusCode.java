@@ -6,12 +6,11 @@ package com.apgroup.pms.type;
 public enum OrderStatusCode {
 
 	ORDER_RECEPTION					(1, "01", "주문접수"),
-	PRODUCT_IN_PRODUCTION			(2, "02", "제품생산중"),
-	PRODUCT_PRODUCTION_COMPLETED	(3, "03", "제품생산완료"),
-	READY_TO_SHIP					(4, "04", "발송준비중"),
-	SHIPMENT_COMPLETED				(5, "05", "발송완료"),
-	
-	ORDER_CANCEL					(99, "99", "주문취소")
+	ORDER_CANCEL					(2, "02", "주문취소"),
+	PRODUCT_IN_PRODUCTION			(3, "03", "제품생산중"),
+	PRODUCT_PRODUCTION_COMPLETED	(4, "04", "제품생산완료"),
+	READY_TO_SHIP					(5, "05", "발송준비중"),
+	SHIPMENT_COMPLETED				(6, "06", "발송완료"),
 	;
 	
 	private int order;

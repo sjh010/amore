@@ -22,18 +22,18 @@ import lombok.ToString;
 @ToString
 public class OrderRequest {
 
-	@ApiModelProperty(example = "주문번호")
+	@ApiModelProperty(name = "주문번호", example = "20220801001")
 	@JsonProperty("order_number")
 	@NotBlank(message = "주문번호없음")
 	private String orderNumber;
 	
-	@ApiModelProperty(example = "주문코드")
+	@ApiModelProperty(name = "주문코드", example = "A7B3")
 	@JsonProperty("order")
 	@NotBlank(message = "주문코드없음")
 	@OrderCode(message = "잘못된 주문코드")
 	private String order;
 	
-	@ApiModelProperty(example = "주문일자")
+	@ApiModelProperty(name = "주문일자", example = "220801")
 	@JsonProperty("order_date")
 	@NotBlank(message = "주문일자없음(yymmdd)")
 	private String orderDate;
