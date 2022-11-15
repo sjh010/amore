@@ -21,7 +21,7 @@ src_root
 ├── utils
 └── validation
 resources
-└── application.yaml
+└── application.properties
 ```
 - Description
     - config : Spring Configuration이 존재하는 패키지
