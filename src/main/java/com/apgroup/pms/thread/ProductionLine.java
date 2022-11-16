@@ -36,7 +36,7 @@ public class ProductionLine implements Runnable {
 	
 	private final int MAX_REMAIN_AMOUNT = 200;				// 원료당 최대 잔량
 
-	private static final int MAX_PRODUCTION_PER_DAY = 3;	// 하루 총 생산 개수
+	private static final int MAX_PRODUCTION_PER_DAY = 30;	// 하루 총 생산 개수
 
 	private static int TODAY_PRODUCTION = 0;				// 금일 생산 개수
 	
@@ -49,10 +49,10 @@ public class ProductionLine implements Runnable {
 	 */
 	@PostConstruct
 	public void init() {
-		rawMaterialRepository.save(new RawMaterial("A", 20, 0));
-		rawMaterialRepository.save(new RawMaterial("B", 20, 0));
-		rawMaterialRepository.save(new RawMaterial("C", 20, 0));
-		rawMaterialRepository.save(new RawMaterial("D", 20, 0));	
+		rawMaterialRepository.save(new RawMaterial("A", 200, 0));
+		rawMaterialRepository.save(new RawMaterial("B", 200, 0));
+		rawMaterialRepository.save(new RawMaterial("C", 200, 0));
+		rawMaterialRepository.save(new RawMaterial("D", 200, 0));	
 	}
 
 	@Scheduled(fixedDelay = 20000, initialDelay = 1000)
