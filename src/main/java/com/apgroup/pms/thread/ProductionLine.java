@@ -55,7 +55,7 @@ public class ProductionLine implements Runnable {
 		rawMaterialRepository.save(new RawMaterial("D", 200, 0));	
 	}
 
-	@Scheduled(fixedDelay = 20000, initialDelay = 1000)
+	@Scheduled(fixedDelay = 30000, initialDelay = 1000)
 	public void logStatus() {
 		StringBuilder sb = new StringBuilder("\n");
 		
