@@ -24,10 +24,10 @@ public class WorkTimer implements Runnable {
 		
 		while(true) {
 			try {
-				if (isWorkTime()) {
+				if (isWorkTime()) { // 근무시간동안은 1분을 1초라고 가정
 					Thread.sleep(1000);
 					time = time.plusMinutes(1);
-				} else {
+				} else { // 비근무시간동안은 16시간을 30초로 가정
 					Thread.sleep(30000);
 					time = time.plusHours(16);
 					ProductionLine.initTodayProduction();
@@ -41,19 +41,14 @@ public class WorkTimer implements Runnable {
 	
 	/**
 	 * 근무시간 여부 확인
-	 * @return
 	 */
 	public static boolean isWorkTime() {
 		return (time.getHour() >= 9 && time.getHour() < 17);
 	}
 	
-	
-	public static boolean isAbleCharge(LocalDateTime futureTime) {
-		LocalDateTime workEndTime = LocalDateTime.of(time.getYear(), time.getMonthValue(), time.getDayOfMonth(), 17, 0);
-
-		return futureTime.isBefore(workEndTime);
-	}
-	
+	/**
+	 * 원료 충전 가능한지 여부
+	 */	
 	public static boolean isAbleCharge() {
 		LocalDateTime futureTime = time.plusMinutes(40);
 		LocalDateTime workEndTime = LocalDateTime.of(time.getYear(), time.getMonthValue(), time.getDayOfMonth(), 17, 0);

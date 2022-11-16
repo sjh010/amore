@@ -6,7 +6,7 @@ import javax.validation.ConstraintValidatorContext;
 import org.springframework.util.ObjectUtils;
 
 /**
- * custom validator
+ * 주문코드 유효성 검사를 위한 custom validator
  */
 public class OrderCodeValidator implements ConstraintValidator<OrderCode, String> {
 

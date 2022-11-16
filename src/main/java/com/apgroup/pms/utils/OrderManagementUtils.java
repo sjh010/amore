@@ -31,8 +31,15 @@ public class OrderManagementUtils {
 		return getOrderResponse(order);	
 	}
 	
-	public static void removeOrderSheet(OrderSheet orderSheet) {
-		orderQueue.remove(orderSheet);
+	/**
+	 * 주문 취소된 주문서를 생산대기 queue에서 삭제한다.
+	 */
+	public static void cancelOrder(String orderNumber) {
+		orderQueue.stream().forEach(orderSheet -> {
+			if (orderSheet.getOrderNumber().equalsIgnoreCase(orderNumber)) {
+				orderQueue.remove(orderSheet);
+			}
+		});
 	}
 	
 	public static OrderSheet getOrderSheet() {
@@ -95,15 +102,6 @@ public class OrderManagementUtils {
 				.build();
 		
 		return orderResponse;
-	}
-
-	public static void cancelOrder(String orderNumber) {
-		orderQueue.stream().forEach(orderSheet -> {
-			if (orderSheet.getOrderNumber().equalsIgnoreCase(orderNumber)) {
-				orderQueue.remove(orderSheet);
-			}
-		});
-		
 	}
 
 }

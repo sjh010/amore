@@ -18,8 +18,8 @@ public class RawMaterial {
 	
 	private String id;
 	
-	private int remainAmount;
+	private int remains;
 	
-	private int stockAmount;
+	private int stock;
 
 }

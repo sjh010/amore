@@ -21,10 +21,10 @@ public class RawMaterialResponse {
 	private String id;
 	
 	@ApiModelProperty(name = "잔여량", example = "100")
-	private Integer remainsAmount;
+	private Integer remains;
 	
 	@ApiModelProperty(name = "재고량", example = "200")
-	private Integer stockAmount;
+	private Integer stock;
 	
 	@ApiModelProperty(name = "에러메세지", example = "해당 원료가 이미 존재합니다.")
 	private String error;

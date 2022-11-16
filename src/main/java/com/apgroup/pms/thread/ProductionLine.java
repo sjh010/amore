@@ -55,6 +55,10 @@ public class ProductionLine implements Runnable {
 		rawMaterialRepository.save(new RawMaterial("D", 200, 0));	
 	}
 
+	
+	/**
+	 * 30초마다 생산 설비 상태 로그 출력
+	 */
 	@Scheduled(fixedDelay = 30000, initialDelay = 1000)
 	public void logStatus() {
 		StringBuilder sb = new StringBuilder("\n");
@@ -64,15 +68,12 @@ public class ProductionLine implements Runnable {
 		sb.append("1. 주문 목록").append("\n");
 		// 생산/대기 중인 주문 목록
 		List<Order> orders = orderRepository.findAll();
-		
 		List<Order> progressList = new ArrayList<Order>();
-		
 		List<Order> receiptList = new ArrayList<Order>();
 		
 		orders.stream().forEach(order -> {
 			if (OrderStatusCode.PRODUCT_IN_PRODUCTION.equals(OrderStatusCode.getByCode(order.getOrderStatus()))) {
-				progressList.add(order);
-				
+				progressList.add(order);	
 			} else if (OrderStatusCode.ORDER_RECEPTION.equals(OrderStatusCode.getByCode(order.getOrderStatus()))) {
 				receiptList.add(order);
 			}
@@ -104,20 +105,29 @@ public class ProductionLine implements Runnable {
 		sb.append("\n").append("2. 원료 잔량").append("\n");
 		rawMaterials.stream().forEach(rawMaterial -> {
 			sb.append(">> 원료명 : ").append(rawMaterial.getId())
-			.append(" / 잔량 : ").append(rawMaterial.getRemainAmount())
-			.append(" / 재고량 : ").append(rawMaterial.getStockAmount()).append("\n");
-		});
-		
-		
+			.append(" / 잔량 : ").append(rawMaterial.getRemains())
+			.append(" / 재고량 : ").append(rawMaterial.getStock()).append("\n");
+		});	
 		sb.append("=====================================");
 		
 		log.info("{}", sb.toString());
 	}
 	
+	/**
+	 * 생산 설비 Thread
+	 * - 생산 설비는 근무시간(9~17시) 동안 주문접수 queue에 주문이 들어올 경우 제품 생산을 준비한다.
+	 * - 하루 최대 생산량에 도달한 경우, 금일 주문은 다음날 근무시간에 생산한다.
+	 * - 제품 생산 시작 전에 필요한 원료와 수량을 계산하여 생산이 가능한지 판단한다.
+	 * - 생산이 가능하다고 판단되면, 제품을 생산하고 발송 준비중 상태로 변경한다.
+	 * - 생산 도중 해당 원료 잔량이 없을 경우, 재고 보유량 내에서 원료를 충전한다. 
+	 * - 충전하는 시간 동안은 제품을 생산하지 않는다.
+	 * - 생산이 불가능할 경우, 재고부족으로 인한 주문 취소 상태로 변경한다.
+	 * - 근무시간이 끝나면, 발송 대기 queue에 있는 주문들을 일괄 발송 완료 처리한다.
+	 */
 	@Override
 	public void run() {
 		while (true) {
-			if (WorkTimer.isWorkTime()) {
+			if (WorkTimer.isWorkTime()) { // 근무시간
 				if (isWorkTime)  {
 					TODAY_PRODUCTION = 0;
 					log.info("[{}] 근무 시작", WorkTimer.getCurrentTime());
@@ -137,7 +147,7 @@ public class ProductionLine implements Runnable {
 					if (isRequiredOneRawMaterial(orderSheet)) { // 효능이 하나이고, 해당 원료가 있는 경우
 						RawMaterial rawMaterial = rawMaterialRepository.findById(orderSheet.getEffect1()).get();
 						
-						if (isAvailableProduction(rawMaterial.getRemainAmount(), rawMaterial.getStockAmount(), orderSheet.getRate1())) {
+						if (isAvailableProduction(rawMaterial.getRemains(), rawMaterial.getStock(), orderSheet.getRate1())) {
 							orderRepository.updateStatus(orderNumber, OrderStatusCode.PRODUCT_IN_PRODUCTION.getCode());
 							production(rawMaterial, orderSheet.getRate1());
 							TODAY_PRODUCTION++;	
@@ -149,7 +159,7 @@ public class ProductionLine implements Runnable {
 							
 							OrderManagementUtils.addForwadingQueue(order);
 							
-							if (rawMaterial.getRemainAmount() == 0 && rawMaterial.getStockAmount() > 0) {
+							if (rawMaterial.getRemains() == 0 && rawMaterial.getStock() > 0) {
 								supplementMaterial(rawMaterial);
 							}
 						} else {
@@ -161,8 +171,8 @@ public class ProductionLine implements Runnable {
 					} else if (isRequiredTwoRawMaterials(orderSheet)) { // 효능이 두개이고, 해당 원료가 있는 경우
 						RawMaterial rawMaterial1 = rawMaterialRepository.findById(orderSheet.getEffect1()).get();
 						RawMaterial rawMaterial2 = rawMaterialRepository.findById(orderSheet.getEffect2()).get();
-						if (isAvailableProduction(rawMaterial1.getRemainAmount(), rawMaterial1.getStockAmount(), orderSheet.getRate1())
-								&& isAvailableProduction(rawMaterial2.getRemainAmount(), rawMaterial2.getStockAmount(), orderSheet.getRate2())) {
+						if (isAvailableProduction(rawMaterial1.getRemains(), rawMaterial1.getStock(), orderSheet.getRate1())
+								&& isAvailableProduction(rawMaterial2.getRemains(), rawMaterial2.getStock(), orderSheet.getRate2())) {
 							
 							orderRepository.updateStatus(orderNumber, OrderStatusCode.PRODUCT_IN_PRODUCTION.getCode());
 							production(rawMaterial1, orderSheet.getRate1());
@@ -174,10 +184,10 @@ public class ProductionLine implements Runnable {
 							orderRepository.updateStatus(orderNumber, OrderStatusCode.READY_TO_SHIP.getCode());
 							OrderManagementUtils.addForwadingQueue(order);
 							
-							if (rawMaterial1.getRemainAmount() == 0 && rawMaterial1.getStockAmount() > 0) {
+							if (rawMaterial1.getRemains() == 0 && rawMaterial1.getStock() > 0) {
 								supplementMaterial(rawMaterial1);
 							}
-							if (rawMaterial2.getRemainAmount() == 0 && rawMaterial2.getStockAmount() > 0) {
+							if (rawMaterial2.getRemains() == 0 && rawMaterial2.getStock() > 0) {
 								supplementMaterial(rawMaterial2);
 							}
 							
@@ -194,7 +204,7 @@ public class ProductionLine implements Runnable {
 						orderRepository.update(order);
 					}				
 				}
-			} else {
+			} else { // 비근무시간
 				if (!isWorkTime) {
 					log.info("[{}] 근무 종료", WorkTimer.getCurrentTime());
 					isWorkTime = true;
@@ -216,50 +226,32 @@ public class ProductionLine implements Runnable {
 
 	
 	/**
-	 * 제품 일괄 발송
-	 */
-	public boolean forwarding() {
-		if (!OrderManagementUtils.isFowardingQueueEmpty()) {
-			List<Order> orders = OrderManagementUtils.getForwardingList();
-			
-			orders.stream().forEach(order -> { 
-				order.setOrderStatus(OrderStatusCode.SHIPMENT_COMPLETED.getCode());
-				orderRepository.update(order);
-			});
-			
-			log.info("[{}] 제품 일괄 발송 완료 : {}", WorkTimer.getCurrentTime(), orders.size());
-		}
-		
-		return true;
-	}
-	
-	/**
 	 * 제품 생산
 	 */
-	public void production(RawMaterial rawMaterial, int requirement) {
-		int remains = rawMaterial.getRemainAmount();
+	private void production(RawMaterial rawMaterial, int requirement) {
+		int remains = rawMaterial.getRemains();
 		
 		if (remains - requirement >= 0) {	// 원료 잔량이 필요량보다 많음. 생산가능
-			rawMaterial.setRemainAmount(remains - requirement);
+			rawMaterial.setRemains(remains - requirement);
 			rawMaterialRepository.update(rawMaterial);
 		}  else {
 			requirement = requirement - remains;
 			
-			int stockAmount = rawMaterial.getStockAmount();
+			int stockAmount = rawMaterial.getStock();
 			
-			rawMaterial.setRemainAmount(0);
+			rawMaterial.setRemains(0);
 			
 			rawMaterialRepository.update(rawMaterial);
 			
 			if (stockAmount >= MAX_REMAIN_AMOUNT) { // 재고있음. 원료 최대로 보충
 				supplementMaterial(rawMaterial);
-				rawMaterial.setRemainAmount(MAX_REMAIN_AMOUNT);
-				rawMaterial.setStockAmount(stockAmount - requirement);
+				rawMaterial.setRemains(MAX_REMAIN_AMOUNT);
+				rawMaterial.setStock(stockAmount - requirement);
 				rawMaterialRepository.update(rawMaterial);
 			} else { // 재고 있음. 재고량만큼 보충
 				supplementMaterial(rawMaterial);
-				rawMaterial.setStockAmount(0);
-				rawMaterial.setRemainAmount(stockAmount - requirement);
+				rawMaterial.setStock(0);
+				rawMaterial.setRemains(stockAmount - requirement);
 				rawMaterialRepository.update(rawMaterial);
 			} 
 		}
@@ -281,7 +273,10 @@ public class ProductionLine implements Runnable {
 		}	
 	}
 
-	public void supplementMaterial(RawMaterial rawMaterial) {
+	/**
+	 * 원료 보충. 원료를 보충하는 동안 제품 생산 하지 않는다.
+	 */
+	private void supplementMaterial(RawMaterial rawMaterial) {
 		log.info("[{}][{} 원료] 보충 시작", WorkTimer.getCurrentTime(), rawMaterial.getId());
 		try {
 			if (WorkTimer.isAbleCharge()) {
@@ -299,6 +294,24 @@ public class ProductionLine implements Runnable {
 		} catch (InterruptedException e) {
 			log.error("ProductLine is dead", e);
 		}
+	}
+	
+	/**
+	 * 제품 일괄 발송
+	 */
+	private boolean forwarding() {
+		if (!OrderManagementUtils.isFowardingQueueEmpty()) {
+			List<Order> orders = OrderManagementUtils.getForwardingList();
+			
+			orders.stream().forEach(order -> { 
+				order.setOrderStatus(OrderStatusCode.SHIPMENT_COMPLETED.getCode());
+				orderRepository.update(order);
+			});
+			
+			log.info("[{}] 제품 일괄 발송 완료 : {}", WorkTimer.getCurrentTime(), orders.size());
+		}
+		
+		return true;
 	}
 	
 	public static boolean isProductionPossible() {

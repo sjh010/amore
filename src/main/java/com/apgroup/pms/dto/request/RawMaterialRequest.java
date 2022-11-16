@@ -19,12 +19,12 @@ import lombok.ToString;
 public class RawMaterialRequest {
 
 	@ApiModelProperty(name = "원료 아이디", example = "E")
-	@JsonProperty(value = "effect", required = true)
+	@JsonProperty(value = "id", required = true)
 	@NotBlank
 	private String id;
 	
 	@ApiModelProperty(name = "재고량", example = "200")
 	@JsonProperty(value = "stock", required = false)
 	@NotNull
-	private Integer amount;
+	private Integer stock;
 }

@@ -51,7 +51,7 @@ public class RawMaterialService {
 		
 		RawMaterial newRawMaterial = RawMaterial.builder()
 				.id(request.getId())
-				.stockAmount(request.getAmount())
+				.stock(request.getStock())
 				.build();
 		
 		repository.save(newRawMaterial);
@@ -93,8 +93,7 @@ public class RawMaterialService {
 		if (repository.existsById(request.getId())) {
 			RawMaterial stock = repository.findById(request.getId()).get();
 			
-			
-			stock.setStockAmount(request.getStock());
+			stock.setStock(request.getStock());
 			
 			return getStockResponse(repository.update(stock));	
 		} else {
@@ -107,7 +106,7 @@ public class RawMaterialService {
 	private RawMaterialStockResponse getStockResponse(RawMaterial rawMaterial) {
 		RawMaterialStockResponse response = RawMaterialStockResponse.builder()
 				.id(rawMaterial.getId())
-				.stock(rawMaterial.getStockAmount())
+				.stock(rawMaterial.getStock())
 				.build(); 
 		
 		return response;
@@ -116,8 +115,8 @@ public class RawMaterialService {
 	private RawMaterialResponse getRawMaterialResponse(RawMaterial rawMaterial) {
 		RawMaterialResponse response = RawMaterialResponse.builder()
 				.id(rawMaterial.getId())
-				.remainsAmount(rawMaterial.getRemainAmount())
-				.stockAmount(rawMaterial.getStockAmount())
+				.remains(rawMaterial.getRemains())
+				.stock(rawMaterial.getStock())
 				.build(); 
 		
 		return response;
