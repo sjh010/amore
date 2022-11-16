@@ -29,12 +29,8 @@ public class GlobalExceptionHandler {
 
 		StringBuilder sb = new StringBuilder();
 		for (FieldError fieldError : bindingResult.getFieldErrors()) {
-			sb.append("field: [");
-			sb.append(fieldError.getField());
-			sb.append("]");
-			sb.append(" input value: [");
-			sb.append(fieldError.getRejectedValue());
-			sb.append("]");
+			sb.append("field: [").append(fieldError.getField()).append("]");
+			sb.append(" input value: [").append(fieldError.getRejectedValue()).append("]");
 		}
 
 		log.error("Validation Exception : {}", sb);

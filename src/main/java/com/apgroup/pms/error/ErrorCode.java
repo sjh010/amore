@@ -5,8 +5,6 @@ package com.apgroup.pms.error;
  */
 public enum ErrorCode {
 
-	
-	
 	ORDER_NOT_EXIST					("801", "해당 주문이 존재하지 않습니다."),
 	ORDER_IS_EXIST					("802", "해당 주문번호가 존재합니다."),
 	ORDER_CANCEL					("803", "주문취소"),
