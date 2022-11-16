@@ -246,7 +246,7 @@ public class ProductionLine implements Runnable {
 			if (stockAmount >= MAX_REMAIN_AMOUNT) { // 재고있음. 원료 최대로 보충
 				supplementMaterial(rawMaterial);
 				rawMaterial.setRemains(MAX_REMAIN_AMOUNT);
-				rawMaterial.setStock(stockAmount - requirement);
+				rawMaterial.setStock(stockAmount - MAX_REMAIN_AMOUNT);
 				rawMaterialRepository.update(rawMaterial);
 			} else { // 재고 있음. 재고량만큼 보충
 				supplementMaterial(rawMaterial);
